@@ -5,15 +5,16 @@
 <title>نقشه مدارس ملارد معاونت پرورشی و تربیت بدنی</title>
 <meta name="description" content="نقشه مدارس ملارد معاونت پرورشی و تربیت بدنی">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f3f6fa;color:#172b4d}
+*{box-sizing:border-box}body{margin:0;font-family:Vazir,Tahoma,Arial,sans-serif;background:#f3f6fa;color:#172b4d}
 header{padding:12px 18px;background:#174a7e;color:white}header h1{font-size:18px;margin:0}
 #tools{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:white;box-shadow:0 2px 8px #0001}
-input,select{font:13px Tahoma;padding:9px;border:1px solid #ccd5df;border-radius:7px;min-width:150px}
+input,select{font:13px Vazir,Tahoma,Arial,sans-serif;padding:9px;border:1px solid #ccd5df;border-radius:7px;min-width:150px}
 #count{font-size:12px;align-self:center;color:#345}
 #map{height:calc(100vh - 112px);min-height:480px}
-.leaflet-popup-content{font-family:Tahoma;line-height:1.9;min-width:210px}
-.note{padding:8px 12px;background:#fff8df;color:#755400;font-size:11px}
+.leaflet-popup-content{font-family:Vazir,Tahoma,Arial,sans-serif;line-height:1.9;min-width:210px}
+.leaflet-container,.leaflet-control{font-family:Vazir,Tahoma,Arial,sans-serif}
 </style></head>
 <body>
 <header><h1>نقشه مدارس ملارد معاونت پرورشی و تربیت بدنی</h1></header>
@@ -21,6 +22,7 @@ input,select{font:13px Tahoma;padding:9px;border:1px solid #ccd5df;border-radius
 <input id="q" placeholder="جست‌وجوی نام مدرسه یا نشانی">
 <select id="stage"><option value="">همه مقاطع</option></select>
 <select id="gender"><option value="">همه جنسیت‌ها</option><option>پسرانه</option><option>دخترانه</option><option>مختلط</option></select>
+<select id="ownership"><option value="">دولتی و غیردولتی</option><option value="public">دولتی</option><option value="private">غیردولتی</option></select>
 <span id="count"></span>
 </div>
 <div id="map"></div>
@@ -40,12 +42,15 @@ stages.forEach(s=>{let o=document.createElement('option');o.value=s;o.textConten
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function refresh(){
  markers.clearLayers();
- const q=document.getElementById('q').value.trim().toLowerCase(), st=stageSel.value, ge=document.getElementById('gender').value;
+ const q=document.getElementById('q').value.trim().toLowerCase(), st=stageSel.value, ge=document.getElementById('gender').value, ow=document.getElementById('ownership').value;
  let shown=0;
  data.features.forEach(f=>{
   const p=f.properties;
   if(st && p.stage!==st) return;
   if(ge && p.gender!==ge) return;
+  const isPrivate=(p.kind||'').includes('غیر دولتی');
+  if(ow==='private' && !isPrivate) return;
+  if(ow==='public' && isPrivate) return;
   if(q && !(p.name+' '+p.address+' '+p.stage).toLowerCase().includes(q)) return;
   const popup=`<b>${esc(p.name)}</b><br>مقطع: ${esc(p.stage)}<br>جنسیت: ${esc(p.gender)}<br>نوع: ${esc(p.kind)}<br>تلفن: ${esc(p.tel||'ثبت نشده')}<br>نشانی: ${esc(p.address||'ثبت نشده')}<br>شناسه: ${esc(p.id)}`;
   L.marker([f.geometry.coordinates[1],f.geometry.coordinates[0]]).bindPopup(popup).addTo(markers);
@@ -53,7 +58,7 @@ function refresh(){
  });
  document.getElementById('count').textContent='نمایش '+shown+' مدرسه از '+data.features.length+' مورد';
 }
-['q','stage','gender'].forEach(id=>document.getElementById(id).addEventListener(id==='q'?'input':'change',refresh));
+['q','stage','gender','ownership'].forEach(id=>document.getElementById(id).addEventListener(id==='q'?'input':'change',refresh));
 refresh();
 if(data.features.length){const bounds=L.latLngBounds(data.features.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]]));map.fitBounds(bounds.pad(0.08));}
 </script></body></html>
